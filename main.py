@@ -100,7 +100,8 @@ def main(host, port, confidence):
             send_osc_landmarks(osc_client, results)
             # Draw landmarks
             draw_landmarks(bg, results, show_numbers)
-            cv2.imshow(title, bg)
+
+        cv2.imshow(title, bg)
 
         # Wait for a key press event or 1 ms to allow window to refresh
         key = cv2.waitKey(1) & 0xFF
