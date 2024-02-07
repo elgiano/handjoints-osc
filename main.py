@@ -11,6 +11,8 @@ BaseOptions = mp.tasks.BaseOptions
 RunningMode = mpv.RunningMode
 HAND_CONNECTIONS = mp.solutions.hands.HAND_CONNECTIONS
 
+from time import time
+
 
 def draw_landmarks(image, detection_result, show_numbers):
     hand_landmarks = detection_result.hand_landmarks
@@ -38,7 +40,7 @@ def draw_landmarks(image, detection_result, show_numbers):
 def send_osc_hands(client, mp_res):
     for (i, hand) in enumerate(mp_res.hand_landmarks):
         msg = [i]
-        isRight = mp_res.handedness[i][0].index > 0
+        isRight = mp_res.handedness[i][0].index
         coords = [c for j in hand for c in (j.x, 1 - j.y)]
         msg.append(isRight)
         msg += coords
@@ -46,12 +48,12 @@ def send_osc_hands(client, mp_res):
 
 
 def send_osc_landmarks(client, mp_res):
-    msg = []
+    hands = mp_res.hand_landmarks
+    n_hands = len(hands)
+    handedness = [h[0].index for h in mp_res.handedness]
+    msg = [n_hands, *handedness]
     for (i, hand) in enumerate(mp_res.hand_landmarks):
-        msg.append(i)
-        isRight = mp_res.handedness[i][0].index > 0
         coords = [c for j in hand for c in (j.x, 1 - j.y)]
-        msg.append(isRight)
         msg += coords
 
     client.send_message("/handjoints", msg)
@@ -73,14 +75,18 @@ def main(host, port, confidence):
                     cv2.WINDOW_GUI_NORMAL | cv2.WINDOW_KEEPRATIO)
 
     # Create mediapipe detector
-    # mp_hands = hands.Hands(static_image_mode=False, max_num_hands=2,
-    #                        min_detection_confidence=confidence)
-    # base_options = python.BaseOptions(model_asset_path='hand_landmarker.task')
+    def mp_on_results(results, img, timestamp):
+        send_osc_landmarks(osc_client, results)
+        # Draw landmarks
+        bg.fill(0)
+        draw_landmarks(bg, results, show_numbers)
+
     options = mpv.HandLandmarkerOptions(
         base_options=BaseOptions(model_asset_path="hand_landmarker.task"),
-        running_mode=RunningMode.IMAGE,
+        running_mode=RunningMode.LIVE_STREAM,
         num_hands=2,
         min_tracking_confidence=confidence,
+        result_callback=mp_on_results
     )
     mp_hands = mpv.HandLandmarker.create_from_options(options)
 
@@ -91,22 +97,19 @@ def main(host, port, confidence):
         if not success:
             break
 
-        bg.fill(0)
         image = cv2.flip(image, 1)
-        results = mp_hands.detect(mp.Image(
+        mp_hands.detect_async(mp.Image(
             image_format=mp.ImageFormat.SRGB,
-            data=cv2.cvtColor(image, cv2.COLOR_BGR2RGB)))
-        if results:
-            send_osc_landmarks(osc_client, results)
-            # Draw landmarks
-            draw_landmarks(bg, results, show_numbers)
-
+            data=cv2.cvtColor(image, cv2.COLOR_BGR2RGB)),
+                              int(time() * 1000))
         cv2.imshow(title, bg)
 
         # Wait for a key press event or 1 ms to allow window to refresh
         key = cv2.waitKey(1) & 0xFF
         if key == ord('n'):
             show_numbers = not show_numbers
+        elif key == ord('q'):
+            break
         # Check if the window is closed
         if cv2.getWindowProperty(title, cv2.WND_PROP_VISIBLE) < 1:
             break
