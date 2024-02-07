@@ -1,2 +1,5 @@
 python-osc
 mediapipe
+appdirs
+requests
+tqdm

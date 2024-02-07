@@ -7,6 +7,10 @@ import mediapipe as mp
 from mediapipe.tasks.python import vision as mpv
 from mediapipe.framework.formats import landmark_pb2
 
+from appdirs import user_cache_dir
+import requests
+from tqdm import tqdm
+from os import makedirs, path, remove
 from time import time
 
 BaseOptions = mp.tasks.BaseOptions
@@ -59,6 +63,41 @@ def send_osc_landmarks(client, mp_res):
     client.send_message("/handjoints", msg)
 
 
+def get_model():
+    cache_dir = user_cache_dir("handjoints-osc")
+    makedirs(cache_dir, exist_ok=True)
+    model_path = path.join(cache_dir, "hand_landmarker.task")
+    if (path.exists(model_path)):
+        return model_path
+    print("> Downloading hand_landmarker model:")
+    return download_model(model_path)
+
+
+def download_model(destination):
+    url = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task"
+    print(url)
+    response = requests.get(url, stream=True)
+    response.raise_for_status()
+    total_size = int(response.headers.get('content-length', 0))
+    block_size = 1024  # 1 KB
+    progress_bar = tqdm(total=total_size, unit='B', unit_scale=True)
+
+    with open(destination, 'wb') as file:
+        for data in response.iter_content(block_size):
+            progress_bar.update(len(data))
+            file.write(data)
+
+    progress_bar.close()
+    if total_size != 0 and progress_bar.n != total_size:
+        # Remove incomplete file if download failed
+        print("Download failed. Please try again.")
+        remove(destination)
+        return None
+    else:
+        print(f"File downloaded successfully to {destination}")
+        return destination
+
+
 def run(host, port, confidence):
 
     show_numbers = False
@@ -81,8 +120,13 @@ def run(host, port, confidence):
         bg.fill(0)
         draw_landmarks(bg, results, show_numbers)
 
+    model = get_model()
+    if model is None:
+        print("Error: model not found, quitting.")
+        return
+
     options = mpv.HandLandmarkerOptions(
-        base_options=BaseOptions(model_asset_path="hand_landmarker.task"),
+        base_options=BaseOptions(model_asset_path=model),
         running_mode=RunningMode.LIVE_STREAM,
         num_hands=2,
         min_tracking_confidence=confidence,

@@ -1,6 +1,6 @@
 [project]
 name = "handjoints-osc"
-version = "0.0.2"
+version = "0.0.3"
 authors = [
   { name="Gianluca Elia", email="elgiano@gmail.com" },
 ]
@@ -11,6 +11,7 @@ requires-python = ">=3.8"
 dependencies = [
     "mediapipe",
     "python-osc",
+    "appdirs", "requests", "tqdm"
 ]
 
 [project.scripts]
