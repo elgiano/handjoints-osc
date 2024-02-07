@@ -1,34 +1,40 @@
-#handjoints-osc
+# handjoints-osc
 
-Real-time hand tracking with MediaPipe. Sends data over OSC. Written in Python.
+Real-time hand tracking that sends joint coordinates over OSC. Written in Python, using Google [MediaPipe](https://developers.google.com/mediapipe).
 
-### Installation
+## Installation
 
-Recommended: make a virtual environment
+Installing via [pipx](https://github.com/pypa/pipx) is recommended, because it installs in an isolated environment.
 
-  python -m venv .venv
-  source .venv/bin/activate
+  pipx install handjoints-osc
 
-Install requirements:
+It's of course also possible to install via pip:
 
-  pip install -r requirements
+  pip install handjoints-osc
 
-Arguments:
+## Usage
 
-  $ python main.py --help
+  $ handjoints-osc --help
 
-  usage: main.py [-h] [--host HOST] [--confidence CONFIDENCE] port
+  usage: handjoints-osc [-h] [--host HOST] [--confidence CONFIDENCE] port
 
   positional arguments:
     port                  send OSC to this port
 
   options:
     -h, --help            show this help message and exit
-    --host HOST           send OSC to this host
+    --host HOST           send OSC to this host (default: localhost)
     --confidence CONFIDENCE, -c CONFIDENCE
-                          minimum detection confidence threshold
+                          minimum detection confidence threshold (default: 0.5)
 
-### OSC format
+For example, to start the program and send joints coordinates to SuperCollider, which typically listens for OSC on port 57120:
+
+  handjoints-osc 57120
+
+When hands are detected, SuperCollider will start receiving OSC messages with path "/handjoints-osc".
+To know which value corresponds to which joint, pressing "n" will display joint numbers on the tracking window.
+
+## OSC format
 
 - path: `/handjoints i *i* ...f`
 - [0] number of detected hands
@@ -44,3 +50,15 @@ Arguments are all in a single list, starting with the number of hands, then hand
 
 If only one hand is detected, numHands + handedness + coords (21 * 2) gives 44 values.
 If two hands are detected, there are two handedness values, so 1 + 2 + 42 + 42 = 87 values.
+
+## Development
+
+Recommended: make a virtual environment
+
+  python -m venv .venv
+  source .venv/bin/activate
+
+Install requirements:
+
+  pip install -r requirements
+
