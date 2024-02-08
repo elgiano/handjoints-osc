@@ -26,6 +26,8 @@ It's of course also possible to install via pip:
     --host HOST           send OSC to this host (default: localhost)
     --confidence CONFIDENCE, -c CONFIDENCE
                           minimum detection confidence threshold (default: 0.5)
+    --device DEVICE, -d DEVICE
+                          video device index or path (default: 0, i.e. the default video device)
 
 For example, to start the program and send joints coordinates to SuperCollider, which typically listens for OSC on port 57120:
 
@@ -33,6 +35,10 @@ For example, to start the program and send joints coordinates to SuperCollider, 
 
 When hands are detected, SuperCollider will start receiving OSC messages with path "/handjoints-osc".
 To know which value corresponds to which joint, pressing "n" will display joint numbers on the tracking window.
+
+Example using an alternative video device:
+
+  handjoints-osc -d /dev/video2 57120
 
 ## OSC format
 
