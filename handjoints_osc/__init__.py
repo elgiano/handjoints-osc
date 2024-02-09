@@ -173,7 +173,7 @@ def main():
                         help="send OSC to this host (default: localhost)")
     parser.add_argument("--confidence", "-c", type=float, default=0.5,
                         help="minimum detection confidence threshold (default: 0.5)")
-    parser.add_argument("--device", "-d", type=str, default=0,
+    parser.add_argument("--device", "-d", type=str, default="0",
                         help="video device index or path (default: 0, i.e. the default video device)")
     args = parser.parse_args()
 

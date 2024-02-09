@@ -1,6 +1,6 @@
 [project]
 name = "handjoints-osc"
-version = "0.0.4"
+version = "0.0.6"
 authors = [
   { name="Gianluca Elia", email="elgiano@gmail.com" },
 ]
